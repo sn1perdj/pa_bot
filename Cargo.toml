@@ -2,17 +2,36 @@
 name = "pa_bot"
 version = "0.1.0"
 edition = "2024"
+default-run = "pa_bot"
 
 [dependencies]
+# Async runtime
 tokio = { version = "1", features = ["full"] }
-tokio-tungstenite = "0.20"
+
+# WebSocket
+tokio-tungstenite = { version = "0.26", features = ["native-tls"] }
+futures-util = "0.3"
+
+# HTTP (Gamma API)
+reqwest = { version = "0.12", features = ["json"] }
+
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Serialization
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+
+# Misc utilities
 uuid = "1"
 dashmap = "5"
 chrono = "0.4"
-questdb-rs = "3"   # ILP client
 crossbeam = "0.8"
+ordered-float = "4.0"
+
+# QuestDB ILP client
+questdb-rs = "3"
+
+# Logging
 log = "0.4"
 env_logger = "0.11"
-ordered-float = "4.0"

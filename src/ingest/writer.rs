@@ -26,7 +26,7 @@ impl DbWriter {
         flush_interval_ms: u64,
     ) -> questdb::Result<Self> {
         let sender = questdb::ingress::SenderBuilder::new(host, port).connect()?;
-        
+
         Ok(Self {
             rx,
             sender,
@@ -140,7 +140,10 @@ impl DbWriter {
 
     fn flush_batch(&mut self, count: usize) {
         if let Err(e) = self.sender.flush(&mut self.buffer) {
-            error!("Failed to flush {} events to QuestDB: {}. Buffer cleared to prevent staleness.", count, e);
+            error!(
+                "Failed to flush {} events to QuestDB: {}. Buffer cleared to prevent staleness.",
+                count, e
+            );
             // Non-panic recovery: Clear the buffer to prevent memory leakage
             // and staleness dropping the failed batch.
             self.buffer.clear();

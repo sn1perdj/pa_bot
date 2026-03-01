@@ -6,17 +6,17 @@ use super::book::OrderBook;
 pub fn imbalance(book: &OrderBook) -> f64 {
     let mut bid_vol = 0.0;
     let mut ask_vol = 0.0;
-    
+
     // Sum top 10 bids (iterating reversed for descending order)
     for (_, vol) in book.bids.iter().rev().take(10) {
         bid_vol += vol;
     }
-    
+
     // Sum top 10 asks (iterating normally for ascending order)
     for (_, vol) in book.asks.iter().take(10) {
         ask_vol += vol;
     }
-    
+
     let total_vol = bid_vol + ask_vol;
     if total_vol > 0.0 {
         (bid_vol - ask_vol) / total_vol
@@ -28,7 +28,10 @@ pub fn imbalance(book: &OrderBook) -> f64 {
 /// Helper to get the highest bid (best_bid)
 #[inline(always)]
 pub fn best_bid(book: &OrderBook) -> Option<f64> {
-    book.bids.iter().next_back().map(|(price, _)| price.into_inner())
+    book.bids
+        .iter()
+        .next_back()
+        .map(|(price, _)| price.into_inner())
 }
 
 /// Helper to get the lowest ask (best_ask)
@@ -70,7 +73,7 @@ pub fn microprice(book: &OrderBook) -> Option<f64> {
             } else {
                 mid_price(book)
             }
-        },
+        }
         _ => mid_price(book),
     }
 }

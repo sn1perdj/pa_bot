@@ -1,6 +1,6 @@
-use crossbeam::channel::{bounded, Receiver, Sender};
-use log::warn;
 use super::IngestEvent;
+use crossbeam::channel::{Receiver, Sender, bounded};
+use log::warn;
 
 /// Decoupled ingestion producer meant to be used inside the WebSocket hot path.
 #[derive(Clone)]
@@ -15,7 +15,9 @@ impl IngestionProducer {
         if let Err(e) = self.tx.try_send(event) {
             match e {
                 crossbeam::channel::TrySendError::Full(_) => {
-                    warn!("Ingestion channel full! Dropping event to maintain WebSocket throughput.");
+                    warn!(
+                        "Ingestion channel full! Dropping event to maintain WebSocket throughput."
+                    );
                 }
                 crossbeam::channel::TrySendError::Disconnected(_) => {
                     warn!("Ingestion channel disconnected! DB writer thread is likely down.");
@@ -28,7 +30,7 @@ impl IngestionProducer {
 /// Creates a high-performance ingestion channel pipeline.
 /// - The `Producer` should be moved to the WebSocket receive loop.
 /// - The `Receiver` should be moved to the Dedicated DB Writer thread.
-/// 
+///
 /// `capacity`: 100,000 to handle bursts without blocking.
 pub fn create_pipeline(capacity: usize) -> (IngestionProducer, Receiver<IngestEvent>) {
     let (tx, rx) = bounded(capacity);

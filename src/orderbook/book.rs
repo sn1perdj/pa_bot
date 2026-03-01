@@ -19,6 +19,15 @@ impl OrderBook {
         Self::default()
     }
 
+    /// Clears all levels and resets the sequence number.
+    /// Call this before replaying a full book snapshot from a `book` WS event.
+    #[inline]
+    pub fn reset(&mut self) {
+        self.bids.clear();
+        self.asks.clear();
+        self.sequence_number = 0;
+    }
+
     /// Handles an incremental delta update natively.
     /// If `size == 0.0`, the level is removed from the book.
     /// Returns `true` if the update was applied, or `false` if it was out-of-order and rejected.
@@ -31,7 +40,7 @@ impl OrderBook {
         self.sequence_number = seq_num;
 
         let key = OrderedFloat(price);
-        
+
         if is_bid {
             if size == 0.0 {
                 self.bids.remove(&key);
@@ -45,7 +54,7 @@ impl OrderBook {
                 self.asks.insert(key, size);
             }
         }
-        
+
         true
     }
 }

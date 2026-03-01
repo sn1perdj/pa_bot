@@ -24,11 +24,11 @@ pub fn normalize_exchange_ts(raw_ts: i64) -> i64 {
 }
 
 /// Helper function to adapt a microsecond timestamp for QuestDB compatibility.
-/// 
-/// Note: QuestDB expects timestamps as UNIX epoch offsets. By default, its 
-/// ILP (InfluxDB Line Protocol) over TCP uses nanoseconds, but if you define 
-/// a column as a designated timestamp, it operates in microseconds. 
-/// Passing microseconds directly is optimal when using the `questdb-rs` ILP client 
+///
+/// Note: QuestDB expects timestamps as UNIX epoch offsets. By default, its
+/// ILP (InfluxDB Line Protocol) over TCP uses nanoseconds, but if you define
+/// a column as a designated timestamp, it operates in microseconds.
+/// Passing microseconds directly is optimal when using the `questdb-rs` ILP client
 /// as long as the semantics match your QuestDB table definition.
 #[inline(always)]
 pub fn micros_to_questdb_timestamp(micros: i64) -> i64 {

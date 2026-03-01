@@ -1,20 +1,23 @@
 use crate::metrics::{microstructure::MicrostructureMetrics, summary::MarketSummary};
-use crate::orderbook::{book::OrderBook, imbalance::{best_ask, best_bid, mid_price}};
+use crate::orderbook::{
+    book::OrderBook,
+    imbalance::{best_ask, best_bid, mid_price},
+};
 
 /// Maintains the internal state of a single actively tracked 5-minute market.
 #[derive(Debug, Clone, Default)]
 pub struct ActiveMarketTracker {
     pub config_symbol: String,
     pub active_slug: String,
-    
+
     // Core engine state tracking
     pub book: OrderBook,
     pub microstructure: MicrostructureMetrics,
-    
+
     // Lifecycle metrics
     pub start_time_us: i64,
     pub is_resolved: bool,
-    
+
     // Tracking excursion limits
     pub initial_mid_price: Option<f64>,
     pub max_price: Option<f64>,
@@ -35,14 +38,14 @@ impl ActiveMarketTracker {
             min_price: None,
         }
     }
-    
+
     /// Called when the market resolves. Generates the final metrics block.
     pub fn finalize(&self, end_time_us: i64) -> MarketSummary {
         let max_adverse = match (self.initial_mid_price, self.min_price) {
             (Some(initial), Some(min)) => ((initial - min) / initial).abs(),
             _ => 0.0,
         };
-        
+
         let max_favorable = match (self.initial_mid_price, self.max_price) {
             (Some(initial), Some(max)) => ((max - initial) / initial).abs(),
             _ => 0.0,
@@ -70,7 +73,7 @@ impl ActiveMarketTracker {
         if self.initial_mid_price.is_none() {
             self.initial_mid_price = Some(price);
         }
-        
+
         // Track the boundaries mapped to max adverse or max favorable excursion
         match self.max_price {
             Some(max) if price > max => self.max_price = Some(price),

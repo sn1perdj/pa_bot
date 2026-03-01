@@ -1,8 +1,8 @@
 /// Configuration for tracking an aggregate series of rotating polymarket IDs
 #[derive(Debug, Clone)]
 pub struct MarketConfig {
-    pub symbol: String,      // e.g., "BTC"
-    pub base_slug: String,   // e.g., "btc-updown-5m-"
+    pub symbol: String,    // e.g., "BTC"
+    pub base_slug: String, // e.g., "btc-updown-5m-"
 }
 
 impl MarketConfig {
