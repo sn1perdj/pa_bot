@@ -133,13 +133,34 @@ pub async fn run(
                                         continue;
                                     }
 
-                                    match PolymarketWsMsg::from_json(&text) {
-                                        Some(parsed) => {
-                                            router.dispatch(parsed);
-                                        }
-                                        None => {
+                                    let trimmed = text.trim();
+                                    if trimmed.starts_with('[') {
+                                        if let Ok(batch) = serde_json::from_str::<Vec<serde_json::Value>>(trimmed) {
+                                            for val in batch {
+                                                let sub_text = val.to_string();
+                                                match PolymarketWsMsg::from_json(&sub_text) {
+                                                    Some(parsed) => {
+                                                        router.dispatch(parsed);
+                                                    }
+                                                    None => {
+                                                        stats.inc_parse_errors();
+                                                        warn!("[WS] Could not parse message in batch: {:.120}", sub_text);
+                                                    }
+                                                }
+                                            }
+                                        } else {
                                             stats.inc_parse_errors();
-                                            warn!("[WS] Could not parse message: {:.120}", text);
+                                            warn!("[WS] Could not parse batched message array: {:.120}", text);
+                                        }
+                                    } else {
+                                        match PolymarketWsMsg::from_json(trimmed) {
+                                            Some(parsed) => {
+                                                router.dispatch(parsed);
+                                            }
+                                            None => {
+                                                stats.inc_parse_errors();
+                                                warn!("[WS] Could not parse message: {:.120}", text);
+                                            }
                                         }
                                     }
                                 }

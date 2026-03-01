@@ -113,15 +113,23 @@ impl EventRouter {
     /// Handle an incremental price_change delta — applies each changed level.
     fn on_price_change(&mut self, delta: PriceChangeMsg) {
         let local_ts = now_micros();
-        let asset_id = &delta.asset_id.clone();
 
-        self.manager.on_market_discovered(asset_id, local_ts);
+        // Pre-discover the market
+        self.manager.on_market_discovered(&delta.market, local_ts);
 
-        if let Some(mut tracker) = self.manager.active_markets.get_mut(asset_id) {
-            let removed_count = delta.changes.iter().filter(|c| c.size_f64() == 0.0).count();
+        // Track which assets got updated to emit events once per asset
+        let mut affected_assets = std::collections::HashSet::new();
 
-            for change in &delta.changes {
+        for change in &delta.price_changes {
+            let asset_id = &change.asset_id;
+            affected_assets.insert(asset_id.clone());
+
+            self.manager.on_market_discovered(asset_id, local_ts);
+
+            if let Some(mut tracker) = self.manager.active_markets.get_mut(asset_id) {
                 let seq = tracker.book.sequence_number + 1;
+                let removed = change.size_f64() == 0.0;
+
                 tracker.book.apply_update(
                     change.is_bid(),
                     change.price_f64(),
@@ -133,26 +141,34 @@ impl EventRouter {
                 if let Some(mid) = imbalance::mid_price(&tracker.book) {
                     tracker.apply_price_update(mid);
                 }
+
+                if removed {
+                    tracker.microstructure.detect_liquidity_shock(1);
+                }
+
+                let final_seq = tracker.book.sequence_number;
+                tracker.microstructure.update_tick(local_ts, final_seq);
             }
+        }
 
-            tracker.microstructure.detect_liquidity_shock(removed_count);
-            let final_seq = tracker.book.sequence_number;
-            tracker.microstructure.update_tick(local_ts, final_seq);
-
-            self.emit_orderbook_event(
-                &tracker.config_symbol.clone(),
-                asset_id,
-                local_ts,
-                &tracker.book,
-            );
-            self.emit_feature_event(
-                &tracker.config_symbol.clone(),
-                asset_id,
-                local_ts,
-                &tracker.book,
-            );
-            self.stats.inc_book_updates();
-            self.stats.inc_feature_updates();
+        // Emit events and update stats
+        for asset_id in affected_assets {
+            if let Some(tracker) = self.manager.active_markets.get(&asset_id) {
+                self.emit_orderbook_event(
+                    &tracker.config_symbol.clone(),
+                    &asset_id,
+                    local_ts,
+                    &tracker.book,
+                );
+                self.emit_feature_event(
+                    &tracker.config_symbol.clone(),
+                    &asset_id,
+                    local_ts,
+                    &tracker.book,
+                );
+                self.stats.inc_book_updates();
+                self.stats.inc_feature_updates();
+            }
         }
     }
 

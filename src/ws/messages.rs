@@ -92,10 +92,13 @@ pub struct BookSnapshot {
 /// A single level change within a `price_change` event.
 #[derive(Debug, Deserialize, Clone)]
 pub struct LevelChange {
+    pub asset_id: String,
     pub price: String,
     pub size: String,
     /// "BUY" = bid side, "SELL" = ask side
     pub side: String,
+    pub best_bid: Option<String>,
+    pub best_ask: Option<String>,
 }
 
 impl LevelChange {
@@ -113,10 +116,9 @@ impl LevelChange {
 /// Incremental orderbook delta — one or more price levels changed.
 #[derive(Debug, Deserialize)]
 pub struct PriceChangeMsg {
-    pub asset_id: String,
-    pub changes: Vec<LevelChange>,
-    pub timestamp: Option<String>,
-    pub hash: Option<String>,
+    pub market: String,
+    pub price_changes: Vec<LevelChange>,
+    pub timestamp: String,
 }
 
 // ─── Trade ───────────────────────────────────────────────────────────────────
